@@ -1,0 +1,9 @@
+[package]
+name = "image-dedup"
+version = "0.1.0"
+authors = ["Kisrákói Gyula <krakoi90@gmail.com>"]
+license = "MIT"
+
+[dependencies]
+image = "0.22.3"
+img_hash = "3.0"
