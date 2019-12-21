@@ -1,7 +1,5 @@
+use std::path::PathBuf;
 use img_hash::{HasherConfig, Hasher, ImageHash};
-use std::path::Path;
-use std::fs::read_dir;
-use std::io::Result;
 
 type HashSize = [u8; 8];
 
@@ -10,39 +8,27 @@ pub struct HashOf {
   file: String
 }
 
-fn hash_file(file: &Path, hasher: &Hasher<HashSize>, hashes: &mut Vec<HashOf>) {
-  match image::open(file) {
-    Ok(img) => {
-      let hash = hasher.hash_image(&img);
-      println!("{:?} -> {}", file, hash.to_base64());
-      hashes.push(HashOf {
-        hash,
-        file: String::from(file.to_string_lossy())
-      });
-    },
-    Err(e) => eprintln!("Error decoding image {:?}: {:?}", file, e),
-  }
-}
-
-fn hash_helper(path: &Path, hasher: &Hasher<HashSize>, hashes: &mut Vec<HashOf>) -> Result<()> {
-  if path.is_dir() {
-    for entry in read_dir(path)? {
-      hash_helper(&entry?.path(), hasher, hashes)?;
-    }
-  } else {
-    hash_file(path, hasher, hashes);
-  }
-
-  return Ok(());
-}
-
-pub fn hash(dir: &Path) -> Result<Vec<HashOf>> {
+pub fn calculate_hashes(files: impl Iterator<Item = PathBuf>) -> Vec<HashOf> {
   let hasher = HasherConfig::with_bytes_type::<HashSize>().to_hasher();
-  let mut hashes = Vec::<HashOf>::new();
 
-  hash_helper(dir, &hasher, &mut hashes)?;
+  return files.filter_map(|file| {
+      return match image::open(&file) {
+        Ok(img) => {
+          let hash = hasher.hash_image(&img);
+          println!("{:?} -> {}", file, hash.to_base64());
 
-  return Ok(hashes);
+          Some(HashOf {
+            hash,
+            file: String::from(file.to_string_lossy())
+          })
+        },
+        Err(e) => {
+          eprintln!("Error decoding image {:?}: {:?}", file, e);
+          None
+        }
+      };
+    })
+  .collect();
 }
 
 pub fn same_pairs(vec: &Vec<HashOf>, threshold: u32) -> Vec<(&String,&String)> {
