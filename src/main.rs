@@ -1,30 +1,35 @@
 extern crate image;
 extern crate img_hash;
-extern crate glob;
+extern crate globset;
+extern crate walkdir;
 extern crate rayon;
 
 mod hash;
 
 use std::env::{args, current_dir};
 use std::io::{Error, ErrorKind};
-use glob::glob;
+use std::path::Path;
+use walkdir::WalkDir;
+use globset::GlobBuilder;
 use self::hash::{calculate_hashes, calculate_hashes_paralell, same_pairs};
 
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = args().collect();
-
-    let mut dir = current_dir()?;
-    dir.push(&args[1]);
+    let dir = Path::new(&args[1]);
 
     if !dir.is_dir() {
-        return Err(Error::new(ErrorKind::Other, "The given path is not a directory!"));
+        panic!("The given path is not a directory!");
     }
 
-    let images = glob(&(dir.to_string_lossy() + "/**/*.jpg"))
-        .expect("Failed to read glob pattern");
+    let images = WalkDir::new(dir);
+
+    let glob = GlobBuilder::new("*.{jpg,jpeg,png,gif,webp,bmp,tiff}")
+        .case_insensitive(true)
+        .build().expect("Failed to parse glob pattern")
+    .compile_matcher();
     
     // let hashes = calculate_hashes(images);
-    let hashes = calculate_hashes_paralell(images);
+    let hashes = calculate_hashes_paralell(images, glob);
     let pairs = same_pairs(&hashes, 5);
 
     for (a, b) in pairs {

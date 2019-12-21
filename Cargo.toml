@@ -5,7 +5,8 @@ authors = ["Kisrákói Gyula <krakoi90@gmail.com>"]
 license = "MIT"
 
 [dependencies]
-glob = "0.3.0"
+globset = "0.4.4"
+walkdir = "2"
 image = "0.22.3"
 img_hash = "3.0"
 rayon = "1.2.1"
