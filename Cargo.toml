@@ -12,6 +12,9 @@ path = "src/lib.rs"
 name = "image-dedup"
 path = "src/main.rs"
 
+[profile.release]
+lto = true
+
 [dependencies]
 clap = "2.33"
 log = "0.4"
